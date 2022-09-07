@@ -1,30 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import './styles/App.css';
-import twitterLogo from './assets/twitter-logo.svg';
 import myNFT from './utils/myNFT.json';
-import {ethers} from "ethers"
+import { ethers } from "ethers"
 
-// Constants
-const TWITTER_HANDLE = '_buildspace';
-const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
-const OPENSEA_LINK = '';
-const TOTAL_MINT_COUNT = 50;
+
 
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState("");
-  const CONTRACT_ADDRESS = "0xD46f02d2D0DBf12E704Db1Bed08b6044e1efD79e";
+  const CONTRACT_ADDRESS = "0xD53c8CDbED0f24870403cA610b1e36c3bbF93E87";
   const [isMinting, setIsMinting] = useState(false);
-  const [isMinted, setIsMinted] = useState(false); 
+  const [isMinted, setIsMinted] = useState(false);
   const [URL, setURL] = useState("");
+  const [explorerURL, setExplorerURL] = useState("")
 
   const checkIfWalletIsConnected = async () => {
     const { ethereum } = window;
 
     if (!ethereum) {
-        console.log("Make sure you have metamask!");
-        return;
+      console.log("Make sure you have metamask!");
+      return;
     } else {
-        console.log("We have the ethereum object", ethereum);
+      console.log("We have the ethereum object", ethereum);
     }
 
     /*
@@ -45,9 +41,9 @@ const App = () => {
     }
   }
 
-    /*
-  * Implement your connectWallet method here
-  */
+  /*
+* Implement your connectWallet method here
+*/
   const connectWallet = async () => {
     try {
       const { ethereum } = window;
@@ -66,14 +62,14 @@ const App = () => {
       * Boom! This should print out public address once we authorize Metamask.
       */
       console.log("Connected", accounts[0]);
-      setCurrentAccount(accounts[0]); 
+      setCurrentAccount(accounts[0]);
       setupEventListener();
     } catch (error) {
       console.log(error)
     }
   }
 
-    // Setup our listener to collect tokenID event
+  // Setup our listener to collect tokenID event
   const setupEventListener = async () => {
     try {
       const { ethereum } = window;
@@ -84,10 +80,8 @@ const App = () => {
         const signer = provider.getSigner();
         const connectedContract = new ethers.Contract(CONTRACT_ADDRESS, myNFT.abi, signer);
 
-        connectedContract.on("NewEpicNFTMinted", (from, tokenId) => {
-          console.log(from, tokenId.toNumber())
-          console.log(`Hey there! We've minted your NFT and sent it to your wallet. It may be blank right now. It can take a max of 10 min to show up on Rarible. Here's the link: https://rinkeby.rarible.com/token/${CONTRACT_ADDRESS}:${tokenId.toNumber()}`);
-          setURL(`https://rinkeby.rarible.com/token/${CONTRACT_ADDRESS}:${tokenId.toNumber()}`);
+        connectedContract.on("NewNFTMinted", (from, tokenId) => {
+          setURL(`https://testnets.opensea.io/assets/rinkeby/${CONTRACT_ADDRESS}/${tokenId.toNumber()}`);
         });
 
         console.log("Setup event listener!")
@@ -112,16 +106,18 @@ const App = () => {
         const connectedContract = new ethers.Contract(CONTRACT_ADDRESS, myNFT.abi, signer);
 
         console.log("Going to pop wallet now to pay gas...")
-        let nftTxn = await connectedContract.makeAnEpicNFT();
+        let nftTxn = await connectedContract.makeNFT();
 
         setIsMinting(true);
+        setExplorerURL(`https://rinkeby.etherscan.io/tx/${nftTxn.hash}`);
 
         console.log("Mining...please wait.")
         await nftTxn.wait();
-        
+
         console.log(`Mined, see transaction: https://rinkeby.etherscan.io/tx/${nftTxn.hash}`);
         setIsMinting(false);
         setIsMinted(true);
+
 
       } else {
         console.log("Ethereum object doesn't exist!");
@@ -150,14 +146,14 @@ const App = () => {
     <div className="App">
       <div className="container">
         <div className="header-container">
-          <p className="header gradient-text">HipHopPunks Collection</p>
+          <p className="header gradient-text">Fraternity House Collection</p>
           <p className="sub-text">
             Each unique. Each beautiful. Discover your NFT today.
           </p>
           <p className="explanation-text">
-            Generate an on-chain NFT with a unique three letter phrase (Rinkeby Test Net)
+            Generate an NFT on the Rinkeby Testnet with a unique three letter frat name!
           </p>
-          
+
           {currentAccount === "" ? (
             renderNotConnectedContainer()
           ) : (
@@ -167,18 +163,14 @@ const App = () => {
           )}
         </div>
         {isMinting === true &&
-    <div className = "sub-text">Minting...</div>}
-    {isMinted === true &&
-    <a className = "sub-text" href={URL}>Here's your NFT!</a>}
-        <div className="footer-container">
-          <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
-          <a
-            className="footer-text"
-            href={TWITTER_LINK}
-            target="_blank"
-            rel="noreferrer"
-          >{`built on @${TWITTER_HANDLE}`}</a>
-        </div>
+          <div className="sub-text">Minting...</div> && <a target="_blank" rel="noopener noreferrer" className="link-text" href={explorerURL}>While you're waiting, checkout out the transaction on Rinkeby's block explorer</a>}
+
+        {isMinted === true &&
+          <a target="_blank" rel="noopener noreferrer" className="link-text" href={URL}>Hey there! We've minted your NFT and sent it to your wallet. It may be blank right now. It can take a max of 5 min to show up on OpenSea. Click here to go to OpenSea! </a>}
+
+
+
+
       </div>
     </div>
   );
